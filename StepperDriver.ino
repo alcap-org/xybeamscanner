@@ -34,8 +34,8 @@ char incomingByte;
 int start = 0, crashToWall = 0;
 void setup()
 {
-	pinMode(dirPin, OUTPUT);
-	pinMode(stpPin, LOW);
+  pinMode(dirPin, OUTPUT);
+  pinMode(stpPin, LOW);
 
   pinMode(dirPin2, OUTPUT);
   pinMode(stpPin2, LOW);
@@ -45,16 +45,16 @@ void setup()
 
 void stepX(boolean dir,int steps)
 {
-	digitalWrite(dirPin,dir);
-	delay(50);
-	for(int i=0; i<steps; i++){
+  digitalWrite(dirPin,dir);
+  delay(50);
+  for(int i=0; i<steps; i++) {
     pinMode(stpPin, HIGH);
     //digitalWrite(stpPin, HIGH);
     delayMicroseconds(1000);
     //digitalWrite(stpPin, LOW);
     delayMicroseconds(1000);
     pinMode(stpPin, LOW);
-	}
+  }
   Xpos++;
 }
 void stepY(boolean dir, int steps)
@@ -86,18 +86,19 @@ void loop()
     Serial.print(incomingByte); Serial.println(" command sent.");
   }
   if(start) {
-  	stepY(directionY,8000); //90mm
-	  delay(500);
+    stepY(directionY,8000); //90mm
+    delay(500);
     stepX(directionX,50); //~2mm
     delay(500);
     directionY = (directionY==0) ? 1 : 0;
     count++;
-    if(count == 5) { //90
+    if(count == 100) { //90
       directionX = (directionX==0) ? 1 : 0;
       count = 0;
     }
   }
   if(crashToWall) {
-    
+    //crashToWall logic
+    crashToWall = 0;
   }
 }
