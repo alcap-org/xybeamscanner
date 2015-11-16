@@ -27,7 +27,7 @@ int dirPin2 = mePort[PORT_2].s1;
 int stpPin2 = mePort[PORT_2].s2;
 
 int Xpos=0, Ypos=0;
-int directionX = 0, directionY=0;
+int directionX = 0, directionY=0; //initial movement right & up
 int count = 0;
 
 char incomingByte;
@@ -35,10 +35,10 @@ int start = 0, crashToWall = 0;
 void setup()
 {
   pinMode(dirPin, OUTPUT);
-  pinMode(stpPin, LOW);
+  pinMode(stpPin, OUTPUT);
 
   pinMode(dirPin2, OUTPUT);
-  pinMode(stpPin2, LOW);
+  pinMode(stpPin2, OUTPUT);
 
   Serial.begin(9600);
 }
@@ -49,13 +49,14 @@ void stepX(boolean dir,int steps)
   delay(50);
   for(int i=0; i<steps; i++) {
     pinMode(stpPin, HIGH);
-    //digitalWrite(stpPin, HIGH);
-    delayMicroseconds(1000);
-    //digitalWrite(stpPin, LOW);
-    delayMicroseconds(1000);
+    delayMicroseconds(2000);
     pinMode(stpPin, LOW);
   }
-  Xpos++;
+  if(dir == 0) {
+    Xpos++;
+  } else {
+    Xpos--;
+  }
 }
 void stepY(boolean dir, int steps)
 {
@@ -63,18 +64,29 @@ void stepY(boolean dir, int steps)
   delay(50);
   for(int j=0; j<steps; j++){
     pinMode(stpPin2, HIGH);
-    //digitalWrite(stpPin2, HIGH);
-    delayMicroseconds(2750);
-    //digitalWrite(stpPin2, LOW);
-    delayMicroseconds(2750);
+    delayMicroseconds(5000);
     pinMode(stpPin2, LOW);
-    Ypos = j;
+    if(directionY == 0) { 
+      Ypos = j; 
+    } else { 
+      Ypos = steps-j-1; 
+    }
     Serial.print(Xpos); Serial.print(" "); Serial.println(Ypos);
-    Serial.flush();
   }
 }
-void loop()
-{
+void move(int X, int Y) {
+  int dirX = (X > Xpos) ? 0 : 1;
+  int dirY = (Y > Ypos) ? 0 : 1;
+  while(Xpos != X) {
+    stepX(dirX, 50);
+    Serial.println(Xpos);
+  }
+  while(Ypos != Y) {
+    stepY(dirY, 1000);
+    Serial.println(Ypos);
+  }
+}
+void loop() {
   delay(50);
   if(Serial.available() > 0) {
     incomingByte = Serial.read();
@@ -86,19 +98,23 @@ void loop()
     Serial.print(incomingByte); Serial.println(" command sent.");
   }
   if(start) {
-    stepY(directionY,8000); //90mm
+    stepY(directionY, 1000); //90mm
     delay(500);
-    stepX(directionX,50); //~2mm
+    stepX(directionX, 50); //~2mm
     delay(500);
     directionY = (directionY==0) ? 1 : 0;
-    count++;
-    if(count == 100) { //90
+    if(count >= 100) { //90
       directionX = (directionX==0) ? 1 : 0;
-      count = 0;
+      count--;
+    } else {
+      count++;
     }
   }
   if(crashToWall) {
     //crashToWall logic
+    start = 0;
+    move(0, 0);
+    directionX = 0; directionY=0; Xpos=0; Ypos=0;
     crashToWall = 0;
   }
 }
