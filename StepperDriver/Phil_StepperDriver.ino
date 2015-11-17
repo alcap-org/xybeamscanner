@@ -20,6 +20,7 @@
 #include <Wire.h>
 #include <SoftwareSerial.h>
 
+#include "motor_signal.h"
 
 //L L L   Full Step   2 Phase
 //H L L   Half Step   1-2 Phase
@@ -101,6 +102,14 @@ inline void report_position_mm(int x, int y)
   report_position_steps(step_to_mm(x), step_to_mm(y));    
 }
 
+inline void signal_position()
+{
+  signal_start(sig_X);
+  signal_byte(sig_X,step_to_mm(xx));
+  signal_start(sig_Y);
+  signal_byte(sig_Y,step_to_mm(yy));
+}
+
 inline void report_completed_move(int dx, int dy)
   {
   Serial.print("Moved ");
@@ -116,6 +125,7 @@ inline void move_mm_X(float mm){
   int dx = move_mm_imp(mm, dirPinX, stpPinX );
   xx += dx;
   report_completed_move(dx,0);
+  signal_position();
 }
 
 inline void move_mm_Y(float mm){
@@ -123,6 +133,7 @@ inline void move_mm_Y(float mm){
   int dy = move_mm_imp(mm, dirPinY, stpPinY);
   yy += dy;
   report_completed_move(0,dy);
+  signal_position();
 }
 
 //-------1---------2---------3---------4---------5---------6---------7---------8
@@ -138,6 +149,8 @@ void crash_home()
 {
   move_steps(1,mm_to_step(120), dirPinX, stpPinX);
   move_steps(1,mm_to_step(105), dirPinX, stpPinX);
+  xx = 0;
+  yy = 0;
 }
 
 void go_home(){
@@ -281,7 +294,11 @@ void loop() {
     
     switch (inChar){
       case 't': Serial.println("This is a test"); continue;
-      case 'r': report_position_mm(xx,yy);    
+      case 'r': report_position_mm(xx,yy); continue;   
+      case 's': signal_position(); continue;
+      case 'h': go_home(); continue;
+      case 'x': move_mm_X(20); continue;
+      case 'y': move_mm_Y(20); continue;
 
       //Take a step.  
       case 'n': goto step; 
